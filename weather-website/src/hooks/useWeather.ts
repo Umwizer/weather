@@ -28,8 +28,8 @@ function useWeather(city:string){
                 const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature`);
                 const weatherData = await weatherRes.json();
                 setData({
-                temp: weatherData.current.temperature_2m,       // was "temparature_2m"
-                feelsLike: weatherData.current.apparent_temperature, // was "temparature"
+                temp: weatherData.current.temperature_2m,
+                feelsLike: weatherData.current.apparent_temperature, 
                 cityName: name,
 });
             }catch(err){
