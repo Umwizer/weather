@@ -1,8 +1,13 @@
 
-function SearchBar(){
+type SearchBarProps = {
+    city: string;
+    setCity: (value: string) => void;
+};
+
+function SearchBar({ city, setCity }: SearchBarProps) {
     return(
         <div className="flex items-center gap-3 max-w-md mx-auto mt-6">
-        <input type="text" placeholder="Search City..." className="w-full max-w-md px-4 py-3 text-base rounded-xl bg-white shadow-sm 
+        <input type="text" placeholder="Search City..." value={city} onChange={(e) => setCity(e.target.value)} className="w-full max-w-md px-4 py-3 text-base rounded-xl bg-white shadow-sm 
              border border-gray-100 text-gray-700
              focus:outline-none focus:ring-2 focus:ring-blue-400"
 />
