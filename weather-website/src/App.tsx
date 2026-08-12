@@ -4,6 +4,7 @@ import WeatherCard from './components/WeatherCard.tsx';
 import StatCard from './components/StatCard.tsx';
 import ForecastDay from './components/ForecastDay.tsx';
 import useWeather from './hooks/useWeather.ts';
+import { getWeatherInfo } from './utils/weatherCodes';
 
 function App() {
   const [city, setCity] = useState("Kigali");
@@ -11,7 +12,7 @@ function App() {
 
   return (
     <div>
-      <SearchBar city={city} setCity={setCity} />
+      <SearchBar onSearch={setCity} />
 
       {loading && <p className="text-center mt-4 text-gray-500">Loading…</p>}
       {error && <p className="text-center mt-4 text-red-500">{error}</p>}
@@ -21,28 +22,62 @@ function App() {
           cityName={data.cityName}
           temp={data.temp}
           feelsLike={data.feelsLike}
+          weatherCode={data.weatherCode}
         />
       )}
 
-      <div className="max-w-md mx-auto mt-4 grid grid-cols-2 gap-3">
-        <StatCard icon="💨" label="WIND SPEED" value="14 km/h" subtext="NW gusts" />
-        <StatCard icon="💧" label="HUMIDITY" value="62%" subtext="Comfortable" />
-        <StatCard icon="☀️" label="UV INDEX" value="6 · High" subtext="Use sunscreen" />
-        <StatCard icon="🧭" label="AIR PRESSURE" value="1013 hPa" subtext="Stable" />
-      </div>
-
-      <div className="max-w-md mx-auto mt-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100">
-        <p className="text-xs font-semibold text-gray-400 mb-3">7-DAY FORECAST</p>
-        <div className="grid grid-cols-7 gap-1">
-          <ForecastDay day="TUE" icon="⛅" high="24" low="16" active={true} />
-          <ForecastDay day="WED" icon="☀️" high="27" low="18" active={false} />
-          <ForecastDay day="THU" icon="☀️" high="28" low="18" active={false} />
-          <ForecastDay day="FRI" icon="☁️" high="21" low="14" active={false} />
-          <ForecastDay day="SAT" icon="🌧️" high="17" low="11" active={false} />
-          <ForecastDay day="SUN" icon="🌦️" high="19" low="12" active={false} />
-          <ForecastDay day="MON" icon="☀️" high="23" low="15" active={false} />
+      {data && (
+        <div className="max-w-md mx-auto mt-4 grid grid-cols-2 gap-3">
+          <StatCard
+            icon="💨"
+            label="WIND SPEED"
+            value={`${Math.round(data.windSpeed)} km/h`}
+            subtext=""
+          />
+          <StatCard
+            icon="💧"
+            label="HUMIDITY"
+            value={`${data.humidity}%`}
+            subtext=""
+          />
+          <StatCard
+            icon="☀️"
+            label="UV INDEX"
+            value={`${Math.round(data.uvIndex)}`}
+            subtext=""
+          />
+          <StatCard
+            icon="🧭"
+            label="AIR PRESSURE"
+            value={`${Math.round(data.pressure)} hPa`}
+            subtext=""
+          />
         </div>
-      </div>
+      )}
+
+      {data && (
+        <div className="max-w-md mx-auto mt-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 mb-3">7-DAY FORECAST</p>
+          <div className="grid grid-cols-7 gap-1">
+            {data.forecast.map((day, i) => {
+              const { icon } = getWeatherInfo(day.weatherCode);
+              const dayLabel = new Date(day.date)
+                .toLocaleDateString('en-US', { weekday: 'short' })
+                .toUpperCase();
+              return (
+                <ForecastDay
+                  key={day.date}
+                  day={dayLabel}
+                  icon={icon}
+                  high={`${Math.round(day.high)}`}
+                  low={`${Math.round(day.low)}`}
+                  active={i === 0}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
