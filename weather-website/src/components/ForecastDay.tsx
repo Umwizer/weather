@@ -1,4 +1,11 @@
-function ForecastDay({ day, icon, high, low, active }) {
+type ForecastDayProps = {
+  day:string;
+  icon:string;
+  high:string;
+  low:string;
+  active:boolean;
+}
+function ForecastDay({ day, icon, high, low, active }:ForecastDayProps) {
   return (
     <div
       className={`flex flex-col items-center p-3 rounded-xl 
