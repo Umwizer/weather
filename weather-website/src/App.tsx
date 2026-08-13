@@ -2,21 +2,44 @@ import SearchBar from './components/SearchBar.tsx';
 import WeatherCard from './components/WeatherCard.tsx';
 import StatCard from './components/StatCard.tsx';
 import ForecastDay from './components/ForecastDay.tsx';
+import AuthCard from './auth/AuthCard.tsx';
+
 import useWeather from './hooks/useWeather.ts';
 import { getWeatherInfo } from './utils/weatherCodes';
+
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from './store/store.ts';
 import { setCity } from './store/citySlice.ts';
 
-function App() {
-  const city = useSelector((state: RootState) => state.city.value);
+import { useAuth } from './context/AuthContext.tsx';
 
+function App() {
+  const { currentUser, loading: authLoading } = useAuth();
+
+  const city = useSelector((state: RootState) => state.city.value);
   const dispatch = useDispatch<AppDispatch>();
 
   const { data, loading, error } = useWeather(city);
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <AuthCard />;
+  }
   return (
     <div>
+      <div className="flex justify-end px-4 py-3">
+        <p className="text-sm text-gray-600">
+          {currentUser.email}
+        </p>
+      </div>
+
       <SearchBar
         onSearch={(cityName) => dispatch(setCity(cityName))}
       />
