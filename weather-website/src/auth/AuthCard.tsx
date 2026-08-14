@@ -1,98 +1,155 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  type User,
-} from 'firebase/auth';
+export default function AuthCard() {
+  const { register, login } = useAuth();
 
-import { ref, set } from 'firebase/database';
+  const [mode, setMode] = useState<'login' | 'register'>('login');
 
-import { auth, database } from '../firebase/config';
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-type AuthContextType = {
-  currentUser: User | null;
-  loading: boolean;
-  register: (
-    fullName: string,
-    email: string,
-    password: string
-  ) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-};
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  async function register(
-    fullName: string,
-    email: string,
-    password: string
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
   ) {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+    e.preventDefault();
 
-    const user = userCredential.user;
+    setError('');
+    setMessage('');
 
-    await set(ref(database, `users/${user.uid}`), {
-      uid: user.uid,
-      fullName,
-      email: user.email,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      if (mode === 'register') {
+        await register(fullName, email, password);
 
-    // Registration should lead to Login, not directly to the dashboard.
-    await signOut(auth);
+        setMessage(
+          'Registration successful. Please login.'
+        );
+
+        setMode('login');
+        setFullName('');
+        setEmail('');
+        setPassword('');
+      } else {
+        await login(email, password);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
   }
-
-  async function login(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password);
-  }
-
-  async function logout() {
-    await signOut(auth);
-  }
-
-  const value: AuthContextType = {
-    currentUser,
-    loading,
-    register,
-    login,
-    logout,
-  };
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
+
+        <h1 className="text-2xl font-bold text-center mb-6">
+          SkyCast
+        </h1>
+
+        <div className="flex mb-6 border-b">
+          <button
+            type="button"
+            onClick={() => setMode('login')}
+            className={`flex-1 pb-3 ${
+              mode === 'login'
+                ? 'border-b-2 border-blue-500 font-semibold'
+                : 'text-gray-500'
+            }`}
+          >
+            Login
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMode('register')}
+            className={`flex-1 pb-3 ${
+              mode === 'register'
+                ? 'border-b-2 border-blue-500 font-semibold'
+                : 'text-gray-500'
+            }`}
+          >
+            Register
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          {mode === 'register' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Full Name
+              </label>
+
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) =>
+                  setFullName(e.target.value)
+                }
+                className="w-full border rounded-lg p-3"
+                placeholder="Enter your full name"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Email
+            </label>
+
+            <input
+              type="email"
+              value={email}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
+              className="w-full border rounded-lg p-3"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Password
+            </label>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              className="w-full border rounded-lg p-3"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-500">
+              {error}
+            </p>
+          )}
+
+          {message && (
+            <p className="text-sm text-green-600">
+              {message}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold"
+          >
+            {mode === 'login'
+              ? 'Login'
+              : 'Create Account'}
+          </button>
+
+        </form>
+      </div>
+    </div>
   );
-}
-
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error('useAuth must be used inside an AuthProvider');
-  }
-
-  return context;
 }
